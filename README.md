@@ -57,7 +57,7 @@ lines:
   required: true
   type: map
   keys:
-    line:
+    number:
       description: Bus/tram line number
       required: true
       type: int
