@@ -1,0 +1,8 @@
+{
+  "domain": "ztm",
+  "name": "Warsaw ZTM Information",
+  "documentation": "https://github.com/peetereczek/ztm",
+  "dependencies": [],
+  "codeowners": ["@kabturek","@peetereczek"],
+  "requirements": []
+}
