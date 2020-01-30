@@ -5,5 +5,4 @@
   "dependencies": [],
   "codeowners": ["@kabturek","@peetereczek"],
   "requirements": [],
-  "iot_class": ["Cloud Polling"]
 }
