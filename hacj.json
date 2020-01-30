@@ -1,0 +1,8 @@
+{
+  "name": "Warsaw ZTM Information",
+  "content_in_root": false,
+  "domains": ["sensor"],
+  "country": "PL",
+  "homeassistant": "0.100.0",
+  "iot_class": "Cloud Polling"
+}
