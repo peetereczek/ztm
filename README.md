@@ -17,6 +17,8 @@ You have to quote `stop_number` as it starts with the number 0.
 </p>
 
 #### Installation
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+
 The easiest way to install it is through [HACS (Home Assistant Community Store)](https://hacs.xyz/), add this repository in the HACS settings and download the integration.
 
 If you want to do that manually, download the files from custom_components/ztm into your $homeassistant_config_dir/custom_components/ztm
