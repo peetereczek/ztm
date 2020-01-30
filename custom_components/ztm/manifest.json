@@ -4,6 +4,6 @@
   "documentation": "https://github.com/peetereczek/ztm",
   "dependencies": [],
   "codeowners": ["@kabturek","@peetereczek"],
-  "requirements": []
+  "requirements": [],
   "iot_class": ["Cloud Polling"]
 }
