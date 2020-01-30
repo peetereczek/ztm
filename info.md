@@ -37,7 +37,7 @@ sensor:
         stop_number: "03"
 ```
 #### Configuration:
-{% configuration %}
+```
 api_key:
   description: API key
   required: true
@@ -57,7 +57,7 @@ lines:
   required: true
   type: map
   keys:
-    line:
+    number:
       description: Bus/tram line number
       required: true
       type: int
@@ -69,6 +69,5 @@ lines:
       description: Number of the stop (starts with 0 so use quotes)
       required: true
       type: string
-{% endconfiguration %}
-
+```
 The public data is coming from [Miasto Stołeczne Warszawa](http://api.um.warszawa.pl ). 
