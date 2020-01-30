@@ -17,9 +17,11 @@ You have to quote `stop_number` as it starts with the number 0.
 </p>
 
 #### Installation
-Download the files from custom_components/ztm into your $homeassistant_config_dir/custom_components/ztm
+The easiest way to install it is through HACS (Home Assistant Community Store), add this repository in the HACS settings and download the integration.
 
-Once downloaded and configured as per below information you'll need to restart HomeAssistant to have the custom component and the sensors of bkk_stop platform taken into consideration.
+If you want to do that manually, download the files from custom_components/ztm into your $homeassistant_config_dir/custom_components/ztm
+
+Once downloaded and configured as per below information, you'll need to restart HomeAssistant to have the custom component and the sensors of ztm platform taken into consideration.
 
 Then add the data to your `configuration.yaml` file as shown in the example:
 
