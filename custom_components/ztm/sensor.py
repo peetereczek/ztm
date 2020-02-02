@@ -27,7 +27,7 @@ ZTM_DATA_ID = 'e923fa0e-d96c-43f9-ae6e-60518c9f3238'
 
 REQUEST_TIMEOUT = 5  # seconds
 SCAN_INTERVAL = timedelta(minutes=1)
-ICON = 'mdi:train'
+ICON = 'mdi:tram'
 UNIT = 'min'
 
 DEFAULT_NAME = "ZTM"
@@ -149,7 +149,10 @@ class ZTMSensor(Entity):
                 if len(departures) == self._entries:
                     break
         if departures:
-            self._state = departures[0]
+            if departures[0]<=60:
+                self._state = departures[0]
+            else:
+                self._state = None
             self._attributes['departures'] = departures
         else:
             self._state = None
