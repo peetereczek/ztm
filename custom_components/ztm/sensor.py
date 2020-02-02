@@ -158,8 +158,9 @@ class ZTMSensor(Entity):
                 self._state = '60+'
             self._attributes['departures'] = departures
         else:
-            self._state = None
-
+            self._attributes['departures'] = 'tommorow'
+            self._state = '60+'
+            
     def data_is_outdated(self):
         """Check if the internal sensor data is outdated."""
         now = dt_util.now()
