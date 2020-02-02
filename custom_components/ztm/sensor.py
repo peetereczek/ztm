@@ -77,6 +77,7 @@ class ZTMSensor(Entity):
         self._loop = loop
         self._websession = websession
         self._line = line
+        self._direction = 'unknown'
         self._stop_id = stop_id
         self._stop_number = stop_number
         self._name = name
@@ -112,6 +113,16 @@ class ZTMSensor(Entity):
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return UNIT
+        
+    @property
+    def line(self):
+        """Return the line number."""
+        return line
+    
+    @property
+    def direction(self):
+        """Return the direction of line."""
+        return direction
 
     @property
     def device_state_attributes(self):
@@ -133,9 +144,9 @@ class ZTMSensor(Entity):
             else:
                 self._timetable = self.map_results(res.get('response', []))
                 self._timetable_date = dt_util.now().date()
-                _LOGGER.debug("Downloaded timetable for line:%s stop:%s-%s",
+                _LOGGER.debug("Downloaded timetable for line: %s stop: %s-%s",
                               self._line, self._stop_id, self._stop_number)
-
+                _LOGGER.debug("TIMETABLE: %s", self._timetable)
         # check if there are trains after actual time
         departures = []
         now = dt_util.now()
@@ -170,10 +181,16 @@ class ZTMSensor(Entity):
 
 def parse_raw_timetable(raw_result):
     """Change {'key': 'name','value': 'val'} into {'name': 'val'}."""
+    _LOGGER.debug("PARSOWANIE: %s", raw_result)
     result = {}
     for val in raw_result['values']:
         if val['key'] == 'czas':
-            result[val['key']] = val['value']
+            if val['value'] != 'None':
+                result[val['key']] = val['value']
+            else:
+                result[val['key']] = 0
+        elif val['key'] == 'kierunek':
+            _LOGGER.debug("KIERUNEK: %s", val['value'])
     return result
 
 
