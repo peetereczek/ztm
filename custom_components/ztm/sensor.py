@@ -152,7 +152,7 @@ class ZTMSensor(Entity):
             if departures[0]<=60:
                 self._state = departures[0]
             else:
-                self._state = None
+                self._state = '60+'
             self._attributes['departures'] = departures
         else:
             self._state = None
