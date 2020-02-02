@@ -140,7 +140,10 @@ class ZTMSensor(Entity):
         departures = []
         now = dt_util.now()
         for entry in self._timetable:
+            if entry['czas'][0:2] == '24':
+                entry['czas'].replace('2', '0', 1).replace('4', '0', 1)
             entry_time = dt_util.parse_time(entry['czas'])
+            _LOGGER.debug("ENTRY: %s, ENTRY_TIME: %s", entry, entry_time)
             entry_dt = datetime.combine(now.date(), entry_time)
             entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
             if entry_dt > now:
