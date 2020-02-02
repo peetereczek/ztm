@@ -17,6 +17,8 @@ You have to quote `stop_number` as it starts with the number 0.
 </p>
 
 #### Installation
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+
 Download the files from custom_components/ztm into your $homeassistant_config_dir/custom_components/ztm
 
 Once downloaded and configured as per below information you'll need to restart HomeAssistant to have the custom component and the sensors of ztm platform taken into consideration.
@@ -70,4 +72,6 @@ lines:
       required: true
       type: string
 ```
+I also advice to modify friendly_name for that sensor
+
 The public data is coming from [Miasto Stołeczne Warszawa](http://api.um.warszawa.pl ). 
