@@ -64,7 +64,7 @@ lines:
     number:
       description: Bus/tram line number
       required: true
-      type: string (ex. N37 for night line)
+      type: string (ex. N37 for night line, don't use "")
     stop_id:
       description: Id of the stop
       required: true
