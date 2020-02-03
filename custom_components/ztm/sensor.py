@@ -142,6 +142,16 @@ class ZTMSensor(Entity):
         for entry in self._timetable:
             if entry['czas'][0:2] == '24':
                 entry['czas'] = '00' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '25':
+                entry['czas'] = '01' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '26':
+                entry['czas'] = '02' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '27':
+                entry['czas'] = '03' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '28':
+                entry['czas'] = '04' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '29':
+                entry['czas'] = '05' + entry['czas'][2:]
             entry_time = dt_util.parse_time(entry['czas'])
             _LOGGER.debug("ENTRY: %s, ENTRY_TIME: %s", entry, entry_time)
             entry_dt = datetime.combine(now.date(), entry_time)
