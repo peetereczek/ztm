@@ -62,7 +62,7 @@ lines:
     number:
       description: Bus/tram line number
       required: true
-      type: int
+      type: string
     stop_id:
       description: Id of the stop
       required: true
