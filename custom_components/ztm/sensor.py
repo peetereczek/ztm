@@ -141,45 +141,44 @@ class ZTMSensor(Entity):
         now = dt_util.now()
         for entry in self._timetable:
             if entry['czas'][0:2] == '24':
-                entry['czas'] = '00' + entry['czas'][2:]
-                entry_time = dt_util.parse_time(entry['czas'])
-                _LOGGER.debug("ENTRY: %s", entry)
-                entry_dt = datetime.combine(now.date() + timedelta(days=1), entry_time)
+                nocny = '00' + entry['czas'][2:]
             elif entry['czas'][0:2] == '25':
-                entry['czas'] = '01' + entry['czas'][2:]
-                entry_time = dt_util.parse_time(entry['czas'])
-                _LOGGER.debug("ENTRY: %s", entry)
-                entry_dt = datetime.combine(now.date() + timedelta(days=1), entry_time)
+                nocny = '01' + entry['czas'][2:]
             elif entry['czas'][0:2] == '26':
-                entry['czas'] = '02' + entry['czas'][2:]
-                entry_time = dt_util.parse_time(entry['czas'])
-                _LOGGER.debug("ENTRY: %s", entry)
-                entry_dt = datetime.combine(now.date() + timedelta(days=1), entry_time)
+                nocny = '02' + entry['czas'][2:]
             elif entry['czas'][0:2] == '27':
-                entry['czas'] = '03' + entry['czas'][2:]
-                entry_time = dt_util.parse_time(entry['czas'])
-                _LOGGER.debug("ENTRY: %s", entry)
-                entry_dt = datetime.combine(now.date() + timedelta(days=1), entry_time)
+                nocny = '03' + entry['czas'][2:]
             elif entry['czas'][0:2] == '28':
-                entry['czas'] = '04' + entry['czas'][2:]
-                entry_time = dt_util.parse_time(entry['czas'])
-                _LOGGER.debug("ENTRY: %s", entry)
-                entry_dt = datetime.combine(now.date() + timedelta(days=1), entry_time)
+                nocny = '04' + entry['czas'][2:]
             elif entry['czas'][0:2] == '29':
-                entry['czas'] = '05' + entry['czas'][2:]
-                entry_time = dt_util.parse_time(entry['czas'])
-                _LOGGER.debug("ENTRY: %s", entry)
+                nocny = '05' + entry['czas'][2:]
+            if  nocny != '':
+                entry_time = dt_util.parse_time(nocny) 
+                _LOGGER.debug("ENTRY: %s", nocny)
                 entry_dt = datetime.combine(now.date() + timedelta(days=1), entry_time)
+                entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
+                _LOGGER.debug("ENTRY_dt: %s", entry_dt)
+                _LOGGER.debug("NOW: %s", now)
+                if entry_dt > now:
+                    time_left = int((entry_dt - now).seconds / 60)
+                    _LOGGER.debug("TIME_LEFT: %s", time_left)
+                    departures.append(time_left)
+##                    if len(departures) == self._entries:
+##                        break
             else:
                 entry_time = dt_util.parse_time(entry['czas'])
                 _LOGGER.debug("ENTRY: %s", entry)
                 entry_dt = datetime.combine(now.date(), entry_time)
-            entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
-            if entry_dt > now:
-                time_left = int((entry_dt - now).seconds / 60)
-                departures.append(time_left)
-                if len(departures) == self._entries:
-                    break
+                entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
+                _LOGGER.debug("ENTRY_dt: %s", entry_dt)
+                _LOGGER.debug("NOW: %s", now)
+                if entry_dt > now:
+                    time_left = int((entry_dt - now).seconds / 60)
+                    _LOGGER.debug("TIME_LEFT: %s", time_left)
+                    departures.append(time_left)
+                    if len(departures) == self._entries:
+                        break
+        departures.sort()
         if departures:
             if departures[0]<=60:
                 self._state = departures[0]
