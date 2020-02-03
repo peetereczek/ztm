@@ -140,7 +140,10 @@ class ZTMSensor(Entity):
         departures = []
         now = dt_util.now()
         for entry in self._timetable:
+            if entry['czas'][0:2] == '24':
+                entry['czas'] = '00' + entry['czas'][2:]
             entry_time = dt_util.parse_time(entry['czas'])
+            _LOGGER.debug("ENTRY: %s, ENTRY_TIME: %s", entry, entry_time)
             entry_dt = datetime.combine(now.date(), entry_time)
             entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
             if entry_dt > now:
@@ -155,8 +158,9 @@ class ZTMSensor(Entity):
                 self._state = '60+'
             self._attributes['departures'] = departures
         else:
-            self._state = None
-
+            self._attributes['departures'] = 'tommorow'
+            self._state = '60+'
+            
     def data_is_outdated(self):
         """Check if the internal sensor data is outdated."""
         now = dt_util.now()
