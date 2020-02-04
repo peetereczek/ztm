@@ -184,7 +184,7 @@ class ZTMSensor(Entity):
                 self._state = departures[0]
             else:
                 self._state = '60+'
-            self._attributes['departures'] = departures
+            self._attributes['departures'] = departures[:self._entries]
         else:
             self._attributes['departures'] = 'tommorow'
             self._state = '60+'
