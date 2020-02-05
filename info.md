@@ -74,4 +74,6 @@ lines:
 ```
 I also advice to modify friendly_name for that sensor
 
-The public data is coming from [Miasto Stołeczne Warszawa](http://api.um.warszawa.pl ). 
+Please take a look on custom card dedicated for that sensor: https://github.com/peetereczek/ztm_stop_card
+
+The public data is coming from [Miasto Stołeczne Warszawa](http://api.um.warszawa.pl ).
