@@ -77,13 +77,12 @@ class ZTMSensor(Entity):
         self._loop = loop
         self._websession = websession
         self._line = line
-        self._direction = 'unknown'
         self._stop_id = stop_id
         self._stop_number = stop_number
         self._name = name
         self._entries = entries
         self._state = None
-        self._attributes = {'departures': []}
+        self._attributes = {'departures': [], 'direction': []}
         self._timetable = []
         self._timetable_date = None
         self._params = {
@@ -118,11 +117,6 @@ class ZTMSensor(Entity):
     def line(self):
         """Return the line number."""
         return line
-    
-    @property
-    def direction(self):
-        """Return the direction of line."""
-        return direction
 
     @property
     def device_state_attributes(self):
@@ -149,24 +143,63 @@ class ZTMSensor(Entity):
                 _LOGGER.debug("TIMETABLE: %s", self._timetable)
         # check if there are trains after actual time
         departures = []
+        direction = []
+        nocny = ''
         now = dt_util.now()
         for entry in self._timetable:
-            entry_time = dt_util.parse_time(entry['czas'])
-            entry_dt = datetime.combine(now.date(), entry_time)
-            entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
-            if entry_dt > now:
-                time_left = int((entry_dt - now).seconds / 60)
-                departures.append(time_left)
-                if len(departures) == self._entries:
-                    break
+            if entry['czas'][0:2] == '24':
+                nocny = '00' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '25':
+                nocny = '01' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '26':
+                nocny = '02' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '27':
+                nocny = '03' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '28':
+                nocny = '04' + entry['czas'][2:]
+            elif entry['czas'][0:2] == '29':
+                nocny = '05' + entry['czas'][2:]
+            if  nocny != '':
+                entry_time = dt_util.parse_time(nocny) 
+                _LOGGER.debug("ENTRY: %s", nocny)
+                entry_dt = datetime.combine(now.date() + timedelta(days=1), entry_time)
+                entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
+                _LOGGER.debug("ENTRY_dt: %s", entry_dt)
+                _LOGGER.debug("NOW: %s", now)
+                if entry_dt > now:
+                    time_left = int((entry_dt - now).seconds / 60)
+                    _LOGGER.debug("TIME_LEFT: %s", time_left)
+                    departures.append(time_left)
+                    direction.append(entry['kierunek'])
+                    list1, list2 = (list(t) for t in zip(*sorted(zip(departures, direction))))
+                    departures = list1
+                    direction = list2
+#                    if len(departures) == self._entries:
+#                        break
+            else:
+                entry_time = dt_util.parse_time(entry['czas'])
+                _LOGGER.debug("ENTRY: %s", entry)
+                entry_dt = datetime.combine(now.date(), entry_time)
+                entry_dt = entry_dt.replace(tzinfo=now.tzinfo)
+                _LOGGER.debug("ENTRY_dt: %s", entry_dt)
+                _LOGGER.debug("NOW: %s", now)
+                if entry_dt > now:
+                    time_left = int((entry_dt - now).seconds / 60)
+                    _LOGGER.debug("TIME_LEFT: %s", time_left)
+                    departures.append(time_left)
+                    direction.append(entry['kierunek'])
+                    if len(departures) == self._entries:
+                        break
         if departures:
             if departures[0]<=60:
                 self._state = departures[0]
             else:
                 self._state = '60+'
-            self._attributes['departures'] = departures
+            self._attributes['departures'] = departures[:self._entries]
+            self._attributes['direction'] = direction[:self._entries]
         else:
-            self._state = None
+            self._attributes['departures'] = 'tommorow'
+            self._state = '60+'
 
     def data_is_outdated(self):
         """Check if the internal sensor data is outdated."""
@@ -181,7 +214,6 @@ class ZTMSensor(Entity):
 
 def parse_raw_timetable(raw_result):
     """Change {'key': 'name','value': 'val'} into {'name': 'val'}."""
-    _LOGGER.debug("PARSOWANIE: %s", raw_result)
     result = {}
     for val in raw_result['values']:
         if val['key'] == 'czas':
@@ -190,7 +222,8 @@ def parse_raw_timetable(raw_result):
             else:
                 result[val['key']] = 0
         elif val['key'] == 'kierunek':
-            _LOGGER.debug("KIERUNEK: %s", val['value'])
+            result[val['key']] = val['value']
+    _LOGGER.debug("RESULT: %s", result)
     return result
 
 
