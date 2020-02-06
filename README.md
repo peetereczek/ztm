@@ -64,7 +64,7 @@ lines:
     number:
       description: Bus/tram line number
       required: true
-      type: int
+      type: string (ex. N37 for night line, don't use "")
     stop_id:
       description: Id of the stop
       required: true
@@ -76,5 +76,7 @@ lines:
 ```
 
 I also advice to modify friendly_name for the sensor
+
+Please take a look on custom card dedicated for that sensor: https://github.com/peetereczek/ztm_stop_card
 
 The public data is coming from [Miasto Stołeczne Warszawa](http://api.um.warszawa.pl ). 
