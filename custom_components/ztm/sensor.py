@@ -31,7 +31,7 @@ ICON = 'mdi:tram'
 UNIT = 'min'
 
 DEFAULT_NAME = "ZTM"
-SENSOR_NAME_FORMAT = "{} {} departures from {} {}"
+SENSOR_NAME_FORMAT = "{} {} from {} {}"
 
 CONF_LINES = 'lines'
 CONF_LINE_NUMBER = 'number'
