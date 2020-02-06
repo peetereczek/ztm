@@ -31,7 +31,7 @@ ICON = 'mdi:tram'
 UNIT = 'min'
 
 DEFAULT_NAME = "ZTM"
-SENSOR_NAME_FORMAT = "{} {} departures from {} {}"
+SENSOR_NAME_FORMAT = "{} {} from {} {}"
 
 CONF_LINES = 'lines'
 CONF_LINE_NUMBER = 'number'
@@ -82,7 +82,7 @@ class ZTMSensor(Entity):
         self._name = name
         self._entries = entries
         self._state = None
-        self._attributes = {'departures': []}
+        self._attributes = {'departures': [], 'direction': []}
         self._timetable = []
         self._timetable_date = None
         self._params = {
@@ -112,6 +112,11 @@ class ZTMSensor(Entity):
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return UNIT
+        
+    @property
+    def line(self):
+        """Return the line number."""
+        return line
 
     @property
     def device_state_attributes(self):
@@ -133,11 +138,13 @@ class ZTMSensor(Entity):
             else:
                 self._timetable = self.map_results(res.get('response', []))
                 self._timetable_date = dt_util.now().date()
-                _LOGGER.debug("Downloaded timetable for line:%s stop:%s-%s",
+                _LOGGER.debug("Downloaded timetable for line: %s stop: %s-%s",
                               self._line, self._stop_id, self._stop_number)
-
+                _LOGGER.debug("TIMETABLE: %s", self._timetable)
         # check if there are trains after actual time
         departures = []
+        direction = []
+        nocny = ''
         now = dt_util.now()
         for entry in self._timetable:
             if entry['czas'][0:2] == '24':
@@ -163,8 +170,12 @@ class ZTMSensor(Entity):
                     time_left = int((entry_dt - now).seconds / 60)
                     _LOGGER.debug("TIME_LEFT: %s", time_left)
                     departures.append(time_left)
-##                    if len(departures) == self._entries:
-##                        break
+                    direction.append(entry['kierunek'])
+                    list1, list2 = (list(t) for t in zip(*sorted(zip(departures, direction))))
+                    departures = list1
+                    direction = list2
+#                    if len(departures) == self._entries:
+#                        break
             else:
                 entry_time = dt_util.parse_time(entry['czas'])
                 _LOGGER.debug("ENTRY: %s", entry)
@@ -176,19 +187,20 @@ class ZTMSensor(Entity):
                     time_left = int((entry_dt - now).seconds / 60)
                     _LOGGER.debug("TIME_LEFT: %s", time_left)
                     departures.append(time_left)
+                    direction.append(entry['kierunek'])
                     if len(departures) == self._entries:
                         break
-        departures.sort()
         if departures:
             if departures[0]<=60:
                 self._state = departures[0]
             else:
                 self._state = '60+'
             self._attributes['departures'] = departures[:self._entries]
+            self._attributes['direction'] = direction[:self._entries]
         else:
             self._attributes['departures'] = 'tommorow'
             self._state = '60+'
-            
+
     def data_is_outdated(self):
         """Check if the internal sensor data is outdated."""
         now = dt_util.now()
@@ -205,7 +217,13 @@ def parse_raw_timetable(raw_result):
     result = {}
     for val in raw_result['values']:
         if val['key'] == 'czas':
+            if val['value'] != 'None':
+                result[val['key']] = val['value']
+            else:
+                result[val['key']] = 0
+        elif val['key'] == 'kierunek':
             result[val['key']] = val['value']
+    _LOGGER.debug("RESULT: %s", result)
     return result
 
 
