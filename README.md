@@ -75,8 +75,10 @@ lines:
       type: string
 ```
 
-I also advice to modify friendly_name for the sensor
+I also advice to modify friendly_name for the sensor (in customizations), otherwise you will have 'not so nice' sensor name displayed:
 
-Please take a look on custom card dedicated for that sensor: https://github.com/peetereczek/ztm_stop_card
+![ztm_card](ztm.jpg)
+
+For pretty custom card, displaying next departures of configured line, please take a look on custom card dedicated for that sensor: https://github.com/peetereczek/ztm_stop_card
 
 The public data is coming from [Miasto Stołeczne Warszawa](http://api.um.warszawa.pl ). 
