@@ -2,7 +2,9 @@
   "domain": "ztm",
   "name": "Warsaw ZTM Information",
   "documentation": "https://github.com/peetereczek/ztm",
+  "issue_tracker": "https://github.com/peetereczek/ztm/issues",
   "dependencies": [],
   "codeowners": ["@kabturek","@peetereczek"],
-  "requirements": []
+  "requirements": [],
+  "version": "0.2.0"
 }
