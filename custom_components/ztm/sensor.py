@@ -119,7 +119,7 @@ class ZTMSensor(Entity):
         return line
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return extra attributes."""
         attribution = CONF_ATTRIBUTION
         if self._timetable_date:
@@ -136,7 +136,7 @@ class ZTMSensor(Entity):
             if res.get('error', ''):
                 _LOGGER.error("Error: %s", res['error'])
             else:
-                self._timetable = self.map_results(res.get('response', []))
+                self._timetable = self.map_results(res.get('response', [0]))
                 self._timetable_date = dt_util.now().date()
                 _LOGGER.debug("Downloaded timetable for line: %s stop: %s-%s",
                               self._line, self._stop_id, self._stop_number)
