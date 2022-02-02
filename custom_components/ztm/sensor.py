@@ -119,7 +119,7 @@ class ZTMSensor(Entity):
         return line
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return extra attributes."""
         attribution = CONF_ATTRIBUTION
         if self._timetable_date:
@@ -131,12 +131,12 @@ class ZTMSensor(Entity):
     async def async_update(self):
         """Update state."""
         if self.data_is_outdated():
-            res = await async_http_request(self._loop, self._websession,
+            res = await async_http_request(self._websession,
                                            ZTM_ENDPOINT, self._params)
             if res.get('error', ''):
                 _LOGGER.error("Error: %s", res['error'])
             else:
-                self._timetable = self.map_results(res.get('response', []))
+                self._timetable = self.map_results(res.get('response', [0]))
                 self._timetable_date = dt_util.now().date()
                 _LOGGER.debug("Downloaded timetable for line: %s stop: %s-%s",
                               self._line, self._stop_id, self._stop_number)
@@ -227,10 +227,10 @@ def parse_raw_timetable(raw_result):
     return result
 
 
-async def async_http_request(loop, websession, uri, params):
+async def async_http_request(websession, uri, params):
     """Perform actual request."""
     try:
-        with async_timeout.timeout(REQUEST_TIMEOUT, loop=loop):
+        with async_timeout.timeout(REQUEST_TIMEOUT):
             req = await websession.get(uri, params=params)
         if req.status != 200:
             return {'error': req.status}
