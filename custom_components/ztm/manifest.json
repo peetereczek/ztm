@@ -6,7 +6,8 @@
   "dependencies": [],
   "codeowners": ["@kabturek","@peetereczek"],
   "requirements": [],
-  "version": "0.2.1",
+  "version": "0.3.0",
   "iot_class": "cloud_polling",
-  "integration_type": "entity"
+  "integration_type": "entity",
+  "config_flow": true
 }
