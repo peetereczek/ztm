@@ -106,17 +106,17 @@ class ZTMSensor(Entity):
     @property
     def icon(self):
         """Icon to use in the frontend, if any."""
-        if re.match(r"^(\d{2})$", line)
+        if re.match(r"^(\d{2})$", line):
           self._icon = 'mdi:tram' #regularTRAM
-        elif re.match(r"^(\d{3})$", line)
+        elif re.match(r"^(\d{3})$", line):
           self._icon = 'mdi:bus' #regularBUS
-        elif re.match(r"^N{1}(\d{2})$", line)
+        elif re.match(r"^N{1}(\d{2})$", line):
           self._icon = 'mdi:bus' #nightBUS
-        elif re.match(r"^L{1}([-]{,1})(\d{1,2})$", line)
+        elif re.match(r"^L{1}([-]{,1})(\d{1,2})$", line):
           self._icon = 'mdi:bus' #localBUS
-        elif re.match(r"^S{1}(\d{1,2})$", line)
+        elif re.match(r"^S{1}(\d{1,2})$", line):
           self._icon = 'mdi:train' #SKM
-        elif re.match(r"^M{1}(\d{1})$", line)
+        elif re.match(r"^M{1}(\d{1})$", line):
           self._icon = 'mdi:train-variant' #METRO
         return self._icon
 
