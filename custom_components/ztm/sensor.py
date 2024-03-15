@@ -83,7 +83,7 @@ class ZTMSensor(Entity):
         self._entries = entries
         self._state = None
         self._icon = ''
-        self._attributes = {'departures in': [], 'direction': []}
+        self._attributes = {'departures': [], 'direction': []}
         self._timetable = []
         self._timetable_date = None
         self._params = {
