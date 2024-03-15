@@ -21,8 +21,7 @@ import homeassistant.util.dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_ATTRIBUTION = ("Data provided by Miasto Stołeczne Warszawa "
-                    "api.um.warszawa.pl")
+CONF_ATTRIBUTION = ("Dane dostarcza Miasto Stołeczne Warszawa, api.um.warszawa.pl")
 ZTM_ENDPOINT = "https://api.um.warszawa.pl/api/action/dbtimetable_get/"
 ZTM_DATA_ID = 'e923fa0e-d96c-43f9-ae6e-60518c9f3238'
 
@@ -31,6 +30,7 @@ SCAN_INTERVAL = timedelta(minutes=1)
 UNIT = 'min'
 
 DEFAULT_NAME = "ZTM"
+SENSOR_ID_FORMAT = "{} {} from {} {}"
 SENSOR_NAME_FORMAT = "{} {} from {} {}"
 
 CONF_LINES = 'lines'
@@ -62,9 +62,9 @@ async def async_setup_platform(hass, config, async_add_devices,
         line = line_config[CONF_LINE_NUMBER]
         stop_id = line_config[CONF_STOP_ID]
         stop_number = line_config[CONF_STOP_NUMBER]
-        name = SENSOR_NAME_FORMAT.format(prepend, line, stop_id, stop_number)
+        identifier = SENSOR_ID_FORMAT.format(prepend, line, stop_id, stop_number)
         lines.append(ZTMSensor(hass.loop, websession, api_key, line, stop_id,
-                               stop_number, name, entries))
+                               stop_number, identifier, entries))
     async_add_devices(lines)
 
 
@@ -72,18 +72,18 @@ class ZTMSensor(Entity):
     """Implementation of a ZTM sensor."""
 
     def __init__(self, loop, websession, api_key, line, stop_id, stop_number,
-                 name, entries):
+                 identifier, entries):
         """Initialize the sensor."""
         self._loop = loop
         self._websession = websession
         self._line = line
         self._stop_id = stop_id
         self._stop_number = stop_number
-        self._name = name
+        self._name = identifier
         self._entries = entries
         self._state = None
         self._icon = ''
-        self._attributes = {'departures': [], 'direction': []}
+        self._attributes = {'departures in': [], 'direction': []}
         self._timetable = []
         self._timetable_date = None
         self._params = {
@@ -93,6 +93,7 @@ class ZTMSensor(Entity):
             'busstopNr': stop_number,
             'line': line,
         }
+        self._attr_unique_id = identifier
 
     @property
     def name(self):
@@ -136,7 +137,7 @@ class ZTMSensor(Entity):
         """Return extra attributes."""
         attribution = CONF_ATTRIBUTION
         if self._timetable_date:
-            attribution_date = " on {}".format(self._timetable_date)
+            attribution_date = " dnia {}".format(self._timetable_date)
             attribution = attribution + attribution_date
         self._attributes[ATTR_ATTRIBUTION] = attribution
         return self._attributes
