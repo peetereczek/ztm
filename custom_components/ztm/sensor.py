@@ -10,6 +10,7 @@ import logging
 import aiohttp
 import async_timeout
 import voluptuous as vol
+import re
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (ATTR_ATTRIBUTION, CONF_NAME, CONF_API_KEY)
@@ -27,8 +28,6 @@ ZTM_DATA_ID = 'e923fa0e-d96c-43f9-ae6e-60518c9f3238'
 
 REQUEST_TIMEOUT = 5  # seconds
 SCAN_INTERVAL = timedelta(minutes=1)
-ICON = 'mdi:tram'
-UNIT = 'min'
 
 DEFAULT_NAME = "ZTM"
 SENSOR_NAME_FORMAT = "{} {} from {} {}"
@@ -64,7 +63,7 @@ async def async_setup_platform(hass, config, async_add_devices,
         stop_number = line_config[CONF_STOP_NUMBER]
         name = SENSOR_NAME_FORMAT.format(prepend, line, stop_id, stop_number)
         lines.append(ZTMSensor(hass.loop, websession, api_key, line, stop_id,
-                               stop_number, name, entries))
+                               stop_number, name, entries, native_unit_of_measurement))
     async_add_devices(lines)
 
 
@@ -72,7 +71,7 @@ class ZTMSensor(Entity):
     """Implementation of a ZTM sensor."""
 
     def __init__(self, loop, websession, api_key, line, stop_id, stop_number,
-                 name, entries):
+                 name, entries, native_unit_of_measurement):
         """Initialize the sensor."""
         self._loop = loop
         self._websession = websession
@@ -92,6 +91,7 @@ class ZTMSensor(Entity):
             'busstopNr': stop_number,
             'line': line,
         }
+        self._native_unit_of_measurement = 'min'
 
     @property
     def name(self):
@@ -106,12 +106,24 @@ class ZTMSensor(Entity):
     @property
     def icon(self):
         """Icon to use in the frontend, if any."""
-        return ICON
+        if re.match(r"^(\d{2})$", line)
+          self._icon = 'mdi:tram' #regularTRAM
+        elif re.match(r"^(\d{3})$", line)
+          self._icon = 'mdi:bus' #regularBUS
+        elif re.match(r"^N{1}(\d{2})$", line)
+          self._icon = 'mdi:bus' #nightBUS
+        elif re.match(r"^L{1}([-]{,1})(\d{1,2})$", line)
+          self._icon = 'mdi:bus' #localBUS
+        elif re.match(r"^S{1}(\d{1,2})$", line)
+          self._icon = 'mdi:train' #SKM
+        elif re.match(r"^M{1}(\d{1})$", line)
+          self._icon = 'mdi:train-variant' #METRO
+        return self._icon
 
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return UNIT
+        return self._native_unit_of_measurement
         
     @property
     def line(self):
