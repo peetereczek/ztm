@@ -1,4 +1,4 @@
-DOMAIN = "ztm"
+DOMAIN = "ztm_beta"
 
 CONF_ATTRIBUTION = ("Dane dostarcza Miasto Stołeczne Warszawa, api.um.warszawa.pl")
 ZTM_ENDPOINT = "https://api.um.warszawa.pl/api/action/dbtimetable_get/"
@@ -8,7 +8,7 @@ REQUEST_TIMEOUT = 10  # seconds
 SENSOR_ID_FORMAT = "{} {} from {} {}"
 SENSOR_NAME_FORMAT = "{} {} z przystanku {} {}"
 UNIT = 'min'
-DEFAULT_NAME = "ZTM"
+DEFAULT_NAME = "ZTM_BETA"
 CONF_LINES = 'lines'
 CONF_LINE_NUMBER = 'number'
 CONF_STOP_ID = 'stop_id'
