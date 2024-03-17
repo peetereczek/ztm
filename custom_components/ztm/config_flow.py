@@ -1,44 +1,36 @@
-import os
-import time
-
-from homeassistant import config_entries, data_entry_flow
-from homeassistant.config_entries import ConfigEntry as config_entry
-from homeassistant.helpers import entity_registry as er, config_validation as cv
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from collections import OrderedDict
-from homeassistant.data_entry_flow import FlowHandler, FlowResult
-from homeassistant.core import callback
-
-import homeassistant.util.dt as dt_util
-import voluptuous as vol
+"""Config flow for ZTM API"""
 import asyncio
 import aiohttp
 import async_timeout
 import logging
-from .const import (
-    DOMAIN,
-    DEFAULT_NAME,
-    CONF_ATTRIBUTION,
-    ZTM_ENDPOINT,
-    ZTM_DATA_ID,
-    CONF_API_KEY,
-    REQUEST_TIMEOUT,
-    UNIT,
-    SENSOR_ID_FORMAT,
-    SENSOR_NAME_FORMAT,
-    CONF_LINES,
-    CONF_LINE_NUMBER,
-    CONF_STOP_ID,
-    CONF_STOP_NUMBER,
-    CONF_ENTRIES,
-    DEFAULT_ENTRIES,
-)
+
+from homeassistant import config_entries
+from homeassistant.core import callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import voluptuous as vol
+
+from .const import (DOMAIN,
+                    DEFAULT_NAME,
+                    CONF_ATTRIBUTION,
+                    ZTM_ENDPOINT,
+                    ZTM_DATA_ID,
+                    CONF_API_KEY,
+                    CONF_LINES,
+                    CONF_LINE_NUMBER,
+                    CONF_STOP_ID,
+                    CONF_STOP_NUMBER,
+                    REQUEST_TIMEOUT,
+                    DEFAULT_ENTRIES,
+                    UNIT,
+                    SENSOR_ID_FORMAT,
+                    SENSOR_NAME_FORMAT,
+                    CONF_ENTRIES)
 
 _LOGGER = logging.getLogger(__name__)
 
 @callback
 def configured_accounts(hass):
-    """Return tuple of configured usernames."""
+    """Return tuple of configured entities."""
     entries = hass.config_entries.async_entries(DOMAIN)
     if entries:
         _LOGGER.debug("Found existing ZTM configurations %s", entries)
@@ -52,17 +44,23 @@ class ZtmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     data = None
     def __init__(self):
         """Initialize."""
-        self._api_key = vol.UNDEFINED
-        self._line_number = vol.UNDEFINED
-        self._stop_id = vol.UNDEFINED
-        self._stop_number = vol.UNDEFINED
+        self._api_key = CONF_API_KEY
+        self._line_number = CONF_LINE_NUMBER
+        if self._line_number == 'number':
+            self._line_number = vol.UNDEFINED
+        self._stop_id = CONF_STOP_ID
+        if self._stop_id == 'stop_id':
+            self._stop_id = vol.UNDEFINED
+        self._stop_number = CONF_STOP_NUMBER
+        if self._stop_number == 'stop_number':
+            self._stop_number = vol.UNDEFINED
         self._request_timeout = REQUEST_TIMEOUT
         self._default_entries = DEFAULT_ENTRIES
 
     async def async_step_user(self, user_input=None):
         errors = {}
         data_schema = {
-            vol.Required("api_key"): str,
+            vol.Required("api_key", default=self._api_key): str,
             vol.Required("line_number"): str,
             vol.Required("stop_id"): str,
             vol.Required("stop_number"): str,
@@ -81,7 +79,7 @@ class ZtmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 'busstopId': self._stop_id,
                 'busstopNr': self._stop_number
             }
-            identifier = SENSOR_ID_FORMAT.format("ZTM", self._line_number, self._stop_id, self._stop_number)
+            identifier = SENSOR_ID_FORMAT.format(DEFAULT_NAME, self._line_number, self._stop_id, self._stop_number)
             _LOGGER.debug("Read user input %s", identifier)
 
             try:
@@ -90,81 +88,61 @@ class ZtmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 session = async_get_clientsession(self.hass)
                 with async_timeout.timeout(REQUEST_TIMEOUT):
                     req = await session.get(ZTM_ENDPOINT, params=params)
+                    json_response = await req.json()
+                    _LOGGER.debug("Configuration ZTM API http response code: %s", req.status)
+                    _LOGGER.debug("Configuration ZTM API http response text: %s", json_response)
                 if req.status == 200:
-                    _LOGGER.info("Configuration correct, ZTM API http response code: %s", req.status)
-                    return self.async_create_entry(
-                        title=identifier,
-                        data=params
-                    )
+                    if json_response is not None:
+                        if json_response['result'] == "false" and json_response['error'] == "Błędny apikey lub jego brak":
+                            errors["base"] = "api_key_invalid"
+                            _LOGGER.error("ZTM API UNAUTHORIZED")
+                        else:
+                            _LOGGER.info("Configuration correct, ZTM API http response code: %s", req.status)
+                            CONF_API_KEY = self._api_key
+                            CONF_LINE_NUMBER = self._line_number
+                            CONF_STOP_ID = self._stop_id
+                            CONF_STOP_NUMBER = self._stop_number
+                            return self.async_create_entry(
+                                title=identifier,
+                                data=params,
+                                options={
+                                    "request_timeout": REQUEST_TIMEOUT,
+                                    "default_entries": DEFAULT_ENTRIES
+                                    }
+                            )
+                    else:
+                        errors["base"] = "unknown"
+                        raise Exception(
+                            _LOGGER.error("Received non-JSON data from ZTM API endpoint")
+                        )
                 elif req.status != 200:
+                    errors["base"] = "unknown"
                     raise Exception(
                         _LOGGER.error("ERROR http code: %s", req.status)
                     )
                 elif req.status == 400:
+                    errors["base"] = "bad_request"
                     raise Exception(
                         _LOGGER.error("BAD REQUEST, http code: %s", req.status)
                     )
-                elif req.status == 401:
-                    raise Exception(
-                        _LOGGER.error("UNAUTHORIZED, http code: %s", req.status)
-                    )
                 elif req.status == 404:
+                    errors["base"] = "cannot_connect"
                     raise Exception(
                         _LOGGER.error("NOT FOUND, http code: %s", req.status)
                     )
-            except (asyncio.TimeoutError, aiohttp.ClientError):
+            except (asyncio.TimeoutError):
                 _LOGGER.error("ZTM API endpoint timeout")
                 errors["base"] = "connection_timeout"
+            except (aiohttp.ClientSession):
+                _LOGGER.error("ZTM API endpoint timeout")
+                errors["base"] = "fatal"
             except Exception:
-                _LOGGER.error("Connection to ZTM API failed. HTTP session was not opened.")
-                errors["base"] = "cannot_connect"
+                _LOGGER.error("Connection to ZTM API failed.")
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(data_schema),
             errors=errors
         )
-
-    @callback
-    @staticmethod
-    def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
-    ) -> config_entries.OptionsFlow:
-        """Create the options flow."""
-        return ZtmOptionsFlowHandler(config_entry)
     
-    async def async_step_finish(self, user_input=None):
-        errors = {}
-        try:
-            return self.async_create_entry(
-                title=self.data["line_number"],
-                data=self.data
-            )
-        except Exception:
-            _LOGGER.exception("Unexpected exception in ZTM API")
-            errors["base"] = "unknown"
-
-
-class ZtmOptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
-
-    async def async_step_init(
-        self, user_input: dict[str, any] | None = None
-    ) -> FlowResult:
-        """Manage the options."""
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
-
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        "show_things",
-                        default=self.config_entry.options.get("show_things"),
-                    ): bool
-                }
-            ),
-        )
+#TO DO options menu to control number of tracked departures and timeout
