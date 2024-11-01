@@ -15,7 +15,6 @@ from homeassistant.const import ATTR_ATTRIBUTION, CONF_NAME, CONF_API_KEY
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity
-import homeassistant.util.dt as dt_util
 
 from .client import ZTMStopClient
 
@@ -97,7 +96,6 @@ class ZTMSensor(Entity):
         self._icon = ""
         self._attributes = {"departures": [], "direction": []}
         self._timetable = []
-        self._timetable_date = None
         self.client = ZTMStopClient(session, api_key, stop_id, stop_number, line)
 
         self._attr_unique_id = identifier
@@ -139,50 +137,28 @@ class ZTMSensor(Entity):
         """Return extra attributes."""
         attribution = CONF_ATTRIBUTION
 
-        if self._timetable_date:
-            attribution_date = " dnia {}".format(self._timetable_date)
-            attribution = attribution + attribution_date
-
         self._attributes[ATTR_ATTRIBUTION] = attribution
         return self._attributes
 
     async def async_update(self):
-        """Update state."""
-        if self.data_is_outdated():
-            departures_data = await self.client.get()
+        departures_data = await self.client.get()
 
-            self._timetable = departures_data.departures or []
-            self._timetable_date = dt_util.now().date()
-            _LOGGER.debug(
-                "Downloaded timetable for line: %s stop: %s-%s",
-                self._line,
-                self._stop_id,
-                self._stop_number,
-            )
-            _LOGGER.debug("TIMETABLE: %s", self._timetable)
+        self._timetable = departures_data.departures
 
-        # check if there are trains after actual time
-        departures = []
-        direction = []
-        now = dt_util.now()
+        _LOGGER.debug(
+            "Downloaded timetable for line: %s stop: %s-%s",
+            self._line,
+            self._stop_id,
+            self._stop_number,
+        )
 
-        for entry in self._timetable:
-            if entry.dt and entry.dt > now:
-                departures.append(entry.time_to_depart)
-                direction.append(entry.kierunek or "na")
+        _LOGGER.debug("TIMETABLE: %s", self._timetable)
 
-        if departures:
-            if departures[0] <= 60:
-                self._state = departures[0]
-            else:
-                self._state = "60+"
+        if departures := self._timetable:
+            self._state = str(departures[0].time_to_depart) if departures[0].time_to_depart <= 60 else "60+"
+
             self._attributes["departures"] = departures[: self._entries]
-            self._attributes["direction"] = direction[: self._entries]
+            self._attributes["direction"] = [departures[0].kierunek] * self._entries
         else:
             self._attributes["departures"] = "tommorow"
             self._state = "60+"
-
-    def data_is_outdated(self):
-        """Check if the internal sensor data is outdated."""
-        now = dt_util.now()
-        return self._timetable_date != now.date()

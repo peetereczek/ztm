@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime
 from typing import Optional
 
 import aiohttp
@@ -44,6 +45,8 @@ class ZTMStopClient:
                         _data = {}
                         _departures = []
 
+                        now = datetime.now().astimezone()
+
                         for reading in json_response["result"]:
                             for entry in reading:
                                 _data[entry["key"]] = entry["value"]
@@ -53,7 +56,13 @@ class ZTMStopClient:
                             except Exception:
                                 _LOGGER.warning(f"Data not matching ZTMDepartureDataReading struct: {_data}")
 
-                        return ZTMDepartureData(departures=_departures)
+                        # return only future departures ----------------------------------------------------------------
+                        departures = list(filter(lambda x: x.dt >= now, _departures))
+
+                        # return from closest departure ----------------------------------------------------------------
+                        departures.sort(key=lambda x: x.time_to_depart)
+
+                        return ZTMDepartureData(departures=departures)
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as e:
             _LOGGER.error(f"Cannot connect to ZTM API endpoint. {e.args}")
