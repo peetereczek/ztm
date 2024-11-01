@@ -12,13 +12,13 @@ class ZTMDepartureDataReading:
         if not re.match(r'^\d{2}:\d{2}:\d{2}$', self.czas):
             raise ValueError("The 'czas' field must be in HH:MM:SS format.")
 
-    symbol_1: Optional[str]
-    symbol_2: Optional[str]
-    trasa: Optional[str]
-    brygada: Optional[str]
-
     kierunek: str = field(default="na")
     czas: str = field(default="00:00:00")
+
+    symbol_1: Optional[str] = field(default=None)
+    symbol_2: Optional[str] = field(default=None)
+    trasa: Optional[str] = field(default=None)
+    brygada: Optional[str] = field(default=None)
 
     @property
     def night_bus(self) -> bool:

@@ -157,7 +157,7 @@ class ZTMSensor(Entity):
         if departures := self._timetable:
             self._state = str(departures[0].time_to_depart) if departures[0].time_to_depart <= 60 else "60+"
 
-            self._attributes["departures"] = departures[: self._entries]
+            self._attributes["departures"] = [x.time_to_depart for x in departures[: self._entries]]
             self._attributes["direction"] = [departures[0].kierunek] * self._entries
         else:
             self._attributes["departures"] = "tommorow"
