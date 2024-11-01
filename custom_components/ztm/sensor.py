@@ -1,7 +1,7 @@
 """
 Support for Zarząd Transportu Miejskiego w Warszawie (ZTM) transport data.
 For more details about this platform please refer to the documentation at
-https://github.com/peetereczek/ztm
+https://github.com/mgorsk1/ztm
 """
 
 from datetime import timedelta
@@ -157,7 +157,7 @@ class ZTMSensor(Entity):
         if departures := self._timetable:
             self._state = str(departures[0].time_to_depart) if departures[0].time_to_depart <= 60 else "60+"
 
-            self._attributes["departures"] = [x.time_to_depart for x in departures[: self._entries]]
+            self._attributes["departures"] = [x.time_to_depart for x in departures[:self._entries]]
             self._attributes["direction"] = [departures[0].kierunek] * self._entries
         else:
             self._attributes["departures"] = "tommorow"
