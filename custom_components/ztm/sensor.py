@@ -1,7 +1,7 @@
 """
 Support for Zarząd Transportu Miejskiego w Warszawie (ZTM) transport data.
 For more details about this platform please refer to the documentation at
-https://github.com/mgorsk1/ztm
+https://github.com/peetereczek/ztm
 """
 
 from datetime import timedelta
