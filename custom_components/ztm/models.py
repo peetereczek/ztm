@@ -22,9 +22,9 @@ class ZTMDepartureDataReading:
 
     @property
     def night_bus(self) -> bool:
-        hour, _, _ = self.czas.split(':')
+        _hour, _, _ = self.czas.split(':')
 
-        hour = int(hour)
+        hour = int(_hour)
 
         if int(hour) >= 24:
             return True
