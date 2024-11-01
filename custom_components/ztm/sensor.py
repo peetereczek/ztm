@@ -167,7 +167,7 @@ class ZTMSensor(Entity):
         now = dt_util.now()
 
         for entry in self._timetable:
-            if entry.dt > now:
+            if entry.dt and entry.dt > now:
                 departures.append(entry.time_to_depart)
                 direction.append(entry.kierunek or "na")
 

@@ -42,16 +42,20 @@ class ZTMDepartureDataReading:
             hour = hour - 24
 
         now = dt_util.now()
-        dt = datetime.combine(now.date() + timedelta(days=1 if self.night_bus else 0),
-                              dt_util.parse_time(f"{hour:02d}:{minute:02d}"))
+        try:
+            dt = datetime.combine(now.date() + timedelta(days=1 if self.night_bus else 0),
+                                  dt_util.parse_time(f"{hour:02d}:{minute:02d}"))
 
-        dt = dt.replace(tzinfo=now.tzinfo)
+            dt = dt.replace(tzinfo=now.tzinfo)
 
-        return dt
+            return dt
+        except:
+            return None
 
     @property
     def time_to_depart(self):
         now = dt_util.now()
+        now = now.replace(tzinfo=now.tzinfo)
 
         return int((self.dt - now).seconds / 60)
 
