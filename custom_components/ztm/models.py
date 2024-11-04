@@ -1,9 +1,13 @@
+import inspect
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import homeassistant.util.dt as dt_util
+
+ZTMTimeZone = ZoneInfo("CET")
 
 
 @dataclass
@@ -19,6 +23,13 @@ class ZTMDepartureDataReading:
     symbol_2: Optional[str] = field(default=None)
     trasa: Optional[str] = field(default=None)
     brygada: Optional[str] = field(default=None)
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**{
+            k: v for k, v in data.items()
+            if k in inspect.signature(cls).parameters
+        })
 
     @property
     def night_bus(self) -> bool:
@@ -41,13 +52,13 @@ class ZTMDepartureDataReading:
         if int(hour) >= 24:
             hour = hour - 24
 
-        now = datetime.now().astimezone()
+        now = datetime.now().astimezone(tz=ZTMTimeZone)
 
         try:
             dt = datetime.combine(now.date() + timedelta(days=1 if self.night_bus else 0),
                                   dt_util.parse_time(f"{hour:02d}:{minute:02d}"))
 
-            dt = dt.replace(tzinfo=now.tzinfo)
+            dt = dt.astimezone(timezone.utc)
 
             return dt
         except Exception:
@@ -56,6 +67,7 @@ class ZTMDepartureDataReading:
     @property
     def time_to_depart(self):
         now = dt_util.now()
+        now = now.astimezone(timezone.utc)
 
         return int((self.dt - now).seconds / 60)
 

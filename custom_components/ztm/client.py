@@ -52,7 +52,7 @@ class ZTMStopClient:
                                 _data[entry["key"]] = entry["value"]
 
                             try:
-                                _departures.append(ZTMDepartureDataReading(**_data))
+                                _departures.append(ZTMDepartureDataReading.from_dict(_data))
                             except Exception:
                                 _LOGGER.warning(f"Data not matching ZTMDepartureDataReading struct: {_data}")
 

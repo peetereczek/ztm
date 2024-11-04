@@ -1,3 +1,4 @@
+import dataclasses
 import re
 from freezegun import freeze_time
 
@@ -69,6 +70,37 @@ async def test_get_successful_response(ztm_client, endpoint_pattern):
         assert len(data.departures) == 1
         assert data.departures[0].kierunek == "Centrum"
         assert data.departures[0].czas == "17:15:00"
+
+
+@pytest.mark.asyncio
+@freeze_time("2024-01-01 14:05:00")
+async def test_get_successful_response_extra_fields(ztm_client, endpoint_pattern):
+    extra_field = "fieldnotinmodel"
+    # Mock response JSON for a successful response
+    mock_json_response = {
+        "result": [
+            [
+                {"key": "kierunek", "value": "Centrum"},
+                {"key": "czas", "value": "17:15:00"},
+                {"key": "symbol_1", "value": None},
+                {"key": "symbol_2", "value": None},
+                {"key": "trasa", "value": None},
+                {"key": "brygada", "value": None},
+                {"key": extra_field, "value": "bla"},
+
+            ]
+        ]
+    }
+
+    with aioresponses() as m:
+        m.get(endpoint_pattern, payload=mock_json_response, status=200)
+
+        data = await ztm_client.get()
+        assert isinstance(data, ZTMDepartureData)
+        assert len(data.departures) == 1
+        assert data.departures[0].kierunek == "Centrum"
+        assert data.departures[0].czas == "17:15:00"
+        assert extra_field not in dataclasses.fields(data.departures[0])
 
 
 @pytest.mark.asyncio
