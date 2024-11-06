@@ -4,8 +4,9 @@ For more details about this platform please refer to the documentation at
 https://github.com/peetereczek/ztm
 """
 
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 import logging
+from enum import Enum
 
 import voluptuous as vol
 import re
@@ -17,6 +18,12 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity
 
 from .client import ZTMStopClient
+
+
+class ReturnType(str, Enum):
+    TIME_TO_DEPART = "TIME_TO_DEPART"
+    TIME_OF_DEPARTURE = "TIME_OF_DEPARTURE"
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +41,8 @@ CONF_STOP_ID = "stop_id"
 CONF_STOP_NUMBER = "stop_number"
 CONF_ENTRIES = "entries"
 DEFAULT_ENTRIES = 3
+CONF_RETURN_TYPE = "return_type"
+DEFAULT_RETURN_TYPE = ReturnType.TIME_TO_DEPART.value
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -50,6 +59,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         ),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_ENTRIES, default=DEFAULT_ENTRIES): cv.positive_int,
+        vol.Optional(CONF_RETURN_TYPE, default=DEFAULT_RETURN_TYPE): vol.Coerce(ReturnType)
     }
 )
 
@@ -60,6 +70,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
     api_key = config[CONF_API_KEY]
     prepend = config[CONF_NAME]
     entries = config[CONF_ENTRIES]
+    return_type = config[CONF_RETURN_TYPE]
     lines = []
     for line_config in config.get(CONF_LINES):
         line = line_config[CONF_LINE_NUMBER]
@@ -76,6 +87,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
                 stop_number,
                 identifier,
                 entries,
+                return_type
             )
         )
     async_add_devices(lines)
@@ -83,7 +95,7 @@ async def async_setup_platform(hass, config, async_add_devices, discovery_info=N
 
 class ZTMSensor(Entity):
     def __init__(
-            self, loop, session, api_key, line, stop_id, stop_number, identifier, entries
+            self, loop, session, api_key, line, stop_id, stop_number, identifier, entries, return_type
     ):
         """Initialize the sensor."""
         self._loop = loop
@@ -97,6 +109,7 @@ class ZTMSensor(Entity):
         self._attributes = {"departures": [], "direction": []}
         self._timetable = []
         self.client = ZTMStopClient(session, api_key, stop_id, stop_number, line)
+        self._return_type = return_type
 
         self._attr_unique_id = identifier
 
@@ -130,7 +143,7 @@ class ZTMSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return "min"
+        return "min" if self._return_type == ReturnType.TIME_TO_DEPART.value else ""
 
     @property
     def extra_state_attributes(self):
@@ -154,10 +167,18 @@ class ZTMSensor(Entity):
 
         _LOGGER.debug("TIMETABLE: %s", self._timetable)
 
-        if departures := self._timetable:
-            self._state = str(departures[0].time_to_depart) if departures[0].time_to_depart <= 60 else "60+"
+        local_timezone = datetime.now(timezone(timedelta(0))).astimezone().tzinfo
 
-            self._attributes["departures"] = [x.time_to_depart for x in departures[:self._entries]]
+        if departures := self._timetable:
+            if self._return_type == ReturnType.TIME_TO_DEPART:
+                getter = lambda x: x.time_to_depart
+            else:
+                getter = lambda x: x.dt.astimezone(local_timezone).strftime("%H:%M")
+
+                self._state = str(getter(departures[0])) if departures[0].time_to_depart <= 60 else "60+"
+
+            self._attributes["departures"] = [getter(x) for x in departures[:self._entries]]
+
             self._attributes["direction"] = [departures[0].kierunek] * self._entries
         else:
             self._attributes["departures"] = "tommorow"

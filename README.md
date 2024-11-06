@@ -56,6 +56,11 @@ name:
   required: false
   type: string
   default: ztm
+return_type:
+  description: Whether to return minutes to departure or actual time of departure
+  required: false
+  type: string (TIME_OF_DEPARTURE, TIME_TO_DEPART)
+  default: TIME_TO_DEPART
 lines:
   description: List of lines to monitor
   required: true
