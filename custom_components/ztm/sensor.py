@@ -175,7 +175,7 @@ class ZTMSensor(Entity):
             else:
                 getter = lambda x: x.dt.astimezone(local_timezone).strftime("%H:%M")
 
-                self._state = str(getter(departures[0])) if departures[0].time_to_depart <= 60 else "60+"
+            self._state = str(getter(departures[0])) if departures[0].time_to_depart <= 60 else "60+"
 
             self._attributes["departures"] = [getter(x) for x in departures[:self._entries]]
 
