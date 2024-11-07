@@ -18,6 +18,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity
 
 from .client import ZTMStopClient
+from .models import ZTMDepartureDataReading
 
 
 class ReturnType(str, Enum):
@@ -153,6 +154,14 @@ class ZTMSensor(Entity):
         self._attributes[ATTR_ATTRIBUTION] = attribution
         return self._attributes
 
+    def _get_departure_value(self, reading: ZTMDepartureDataReading):
+        local_timezone = datetime.now(timezone(timedelta(0))).astimezone().tzinfo
+
+        if self._return_type == ReturnType.TIME_TO_DEPART:
+            return reading.time_to_depart
+        else:
+            return reading.astimezone(local_timezone).strftime("%H:%M")
+
     async def async_update(self):
         departures_data = await self.client.get()
 
@@ -167,17 +176,10 @@ class ZTMSensor(Entity):
 
         _LOGGER.debug("TIMETABLE: %s", self._timetable)
 
-        local_timezone = datetime.now(timezone(timedelta(0))).astimezone().tzinfo
-
         if departures := self._timetable:
-            if self._return_type == ReturnType.TIME_TO_DEPART:
-                getter = lambda x: x.time_to_depart
-            else:
-                getter = lambda x: x.dt.astimezone(local_timezone).strftime("%H:%M")
+            self._state = str(self._get_departure_value(departures[0])) if departures[0].time_to_depart <= 60 else "60+"
 
-            self._state = str(getter(departures[0])) if departures[0].time_to_depart <= 60 else "60+"
-
-            self._attributes["departures"] = [getter(x) for x in departures[:self._entries]]
+            self._attributes["departures"] = [self._get_departure_value(x) for x in departures[:self._entries]]
 
             self._attributes["direction"] = [departures[0].kierunek] * self._entries
         else:
